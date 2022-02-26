@@ -64,3 +64,17 @@ export const getBackToCourseSectionProperties = (cookie) => {
     method: "POST"
   };
 }
+
+export const getBackToCourseListProperties = (cookie) => {
+  return {
+    headers: {
+      "cache-control": "max-age=0",
+      "content-type": "application/x-www-form-urlencoded",
+      "Cookie": cookie,
+      "Connection": "Keep-Alive",
+      "Keep-Alive": "timeout=15, max=98"
+    },
+    body: "SubmitBack=Back&hidden_redir=Course_Info",
+    method: "POST"
+  };
+}

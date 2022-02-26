@@ -1,11 +1,12 @@
 import fetch from 'node-fetch';
 import fs from 'fs';
 import { JSDOM } from "jsdom";
-import mapSeries from 'async/mapSeries';
+import mapSeries from 'async/mapSeries.js';
+import mapLimit from 'async/mapLimit.js';
 import {
   URL, getCourseInfoProperties, getCourseProperties,
   getSectionInfoProperties, getBackToCourseSectionProperties,
-  excludeList
+  getBackToCourseListProperties, excludeList
 } from './constants.js';
 
 const sendRequest = async (url, properties = {}) => {
@@ -75,7 +76,7 @@ const getCoursesForDepartment = async (department, rawCourses, cookie) => {
   });
 
   let erroredCourses = [];
-  const coursesWithSections = await Promise.all(filteredCourses.map(async (course) => {
+  const coursesWithSections = await mapSeries(filteredCourses, async (course) => {
     const properties = getCourseInfoProperties(course.courseCode, cookie);
     const response = await sendRequest(URL, properties);
     if (!response) {
@@ -109,8 +110,7 @@ const getCoursesForDepartment = async (department, rawCourses, cookie) => {
       courseSections.push(section);
     }
 
-    const courseSectionsWithCriteria = await Promise.all(courseSections.map(async (section) => {
-      
+    const courseSectionsWithCriteria = await mapSeries(courseSections, async (section) => {
       const properties = getSectionInfoProperties(section.sectionNumber, cookie);
       const response = await sendRequest(URL, properties);
       if (!response) {
@@ -122,6 +122,9 @@ const getCoursesForDepartment = async (department, rawCourses, cookie) => {
 
       const dom = new JSDOM(sectionInfo, { url: URL });
       const { document } = dom.window;
+      const isThereCriteria = document.querySelector('#formmessage > font > b').textContent.trim().length === 0;
+      if (!isThereCriteria) return { section, sectionCriterias: null };
+
       const criteriaTable = Array.from(document.querySelector('#single_content > form > table:nth-child(6) > tbody')?.children || []).slice(1);
       const sectionCriterias = criteriaTable.map(criteria => {
         return {
@@ -136,22 +139,31 @@ const getCoursesForDepartment = async (department, rawCourses, cookie) => {
           endGrade: criteria.children[8]?.textContent.trim()
         }
       });
-      // const getBackProps = getBackToCourseSectionProperties(cookie);
-      // const getBackResponse = await sendRequest(URL, getBackProps);
-      // // if (!getBackResponse) {
-      // //   console.log('section criteria cannot be fetched get back failed');
-      // //   erroredCourses.push(course);
-      // //   return;
-      // // }
+
+      const getBackProps = getBackToCourseSectionProperties(cookie);
+      const getBackResponse = await sendRequest(URL, getBackProps);
+      if (!getBackResponse) {
+        console.log('section criteria cannot be fetched get back failed');
+        erroredCourses.push(course);
+        return;
+      }
 
       return { section, sectionCriterias };
-    }));
+    });
+
+    const getBackToCourseListProps = getBackToCourseListProperties(cookie);
+    const getBackResponse = await sendRequest(URL, getBackToCourseListProps);
+    if (!getBackResponse) {
+      console.log('section criteria cannot be fetched get back failed');
+      erroredCourses.push(course);
+      return;
+    }
 
     return {
       ...course,
       courseSections: courseSectionsWithCriteria
     };
-  }));
+  });
 
   if (erroredCourses.length > 0) {
     console.log(erroredCourses);
@@ -164,8 +176,7 @@ const getCourses = async () => {
   const departments = JSON.parse(fs.readFileSync('departments.json', 'utf8')).result;
 
   let cookie;
-  const courses = await Promise.all(departments.map(async (department) => {
-    if (department.value !== '571') return;
+  const courses = await mapLimit(departments, 5, async (department) => {
     try {
       console.log(department.text);
       const properties = getCourseProperties(department.value, cookie);
@@ -184,7 +195,7 @@ const getCourses = async () => {
     } catch (error) {
       console.log(error);
     }
-  }));
+  });
 
 
 
