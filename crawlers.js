@@ -35,7 +35,7 @@ const getDepartments = async () => {
     const isBanned = ['Spring', 'Fall', 'Summer School'].reduce((acc, curr) => acc || option.text.includes(curr), false);
     return !isBanned;
   });
-  console.log(filteredOptions.length);
+
   const simplifiedOptions = filteredOptions.map(option => {
     const { value, text } = option;
     return { value, text };
@@ -43,7 +43,7 @@ const getDepartments = async () => {
   const optionsJSON = {
     result: simplifiedOptions
   }
-  fs.writeFile('departments.json', JSON.stringify(optionsJSON), 'utf8', (err) => {
+  fs.writeFileSync('departments.json', JSON.stringify(optionsJSON), 'utf8', (err) => {
     if (err) {
       console.log(err);
     }
@@ -176,7 +176,7 @@ const getCourses = async () => {
   const departments = JSON.parse(fs.readFileSync('departments.json', 'utf8')).result;
 
   let cookie;
-  const courses = await mapLimit(departments, 5, async (department) => {
+  const courses = await mapLimit(departments, 32, async (department) => {
     try {
       console.log(department.text);
       const properties = getCourseProperties(department.value, cookie);
@@ -197,8 +197,6 @@ const getCourses = async () => {
     }
   });
 
-
-
   fs.writeFile('courses.json', JSON.stringify(courses), 'utf8', (err) => {
     if (err) {
       console.log(err);
@@ -208,8 +206,10 @@ const getCourses = async () => {
 }
 
 const main = async () => {
-  // await getDepartments();
+  console.time('main work time');
+  await getDepartments();
   await getCourses();
+  console.timeEnd('main work time');
 }
 
 main();
