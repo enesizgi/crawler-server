@@ -246,7 +246,7 @@ const main = async () => {
   console.time('main work time');
   getDepartmentsAbbreviations();
   await getDepartments();
-  // await getCourses();
+  await getCourses();
   console.timeEnd('main work time');
 }
 
