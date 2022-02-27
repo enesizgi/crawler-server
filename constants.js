@@ -1,4 +1,5 @@
-export const URL = 'https://oibs2.metu.edu.tr/View_Program_Course_Details_64/main.php';
+export const viewProgramCourseDetailsURL = 'https://oibs2.metu.edu.tr/View_Program_Course_Details_64/main.php';
+export const viewProgramDetailsURL = 'https://oibs.metu.edu.tr/cgi-bin/View_Program_Details_58/View_Program_Details_58.cgi';
 
 export const excludeList = [
   'SUMMER PRACTICE',
@@ -75,6 +76,17 @@ export const getBackToCourseListProperties = (cookie) => {
       "Keep-Alive": "timeout=15, max=98"
     },
     body: "SubmitBack=Back&hidden_redir=Course_Info",
+    method: "POST"
+  };
+}
+
+export const getDepAbbreviationsProperties = () => {
+  return {
+    headers: {
+      "cache-control": "max-age=0",
+      "content-type": "application/x-www-form-urlencoded",
+    },
+    body: "SubmitName=Submit&SaFormName=action_index__Findex_html",
     method: "POST"
   };
 }

@@ -20,6 +20,17 @@ app.get('/departments', async (req, res) => {
     });
 });
 
+app.get('/deps', async (req, res) => {
+    fs.readFile('departmentsAbbreviations.json', 'utf8', (err, data) => {
+        if (err) {
+            console.log(err);
+        }
+        console.log('file read');
+        res.send(data);
+    });
+});
+
+
 app.get('/courses', async (req, res) => {
     fs.readFile('courses.json', 'utf8', (err, data) => {
         if (err) {
