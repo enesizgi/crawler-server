@@ -1,5 +1,6 @@
 import express from "express";
 import corse from 'cors';
+import compression from "compression";
 import fs from 'fs';
 import { JSDOM } from "jsdom";
 
@@ -7,6 +8,8 @@ const app = express();
 app.use(corse({
     origin: '*'
 }));
+
+app.use(compression());
 
 app.get('/departments', async (req, res) => {
     fs.readFile('departments.json', 'utf8', (err, data) => {
