@@ -2,7 +2,6 @@ import express from "express";
 import corse from 'cors';
 import compression from "compression";
 import fs from 'fs';
-import { JSDOM } from "jsdom";
 
 const app = express();
 app.use(corse({
