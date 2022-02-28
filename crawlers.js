@@ -7,7 +7,8 @@ import {
   viewProgramCourseDetailsURL, excludeList, viewProgramDetailsURL,
   getCourseInfoProps, getCourseProps, getSectionInfoProps,
   getBackToCourseSectionProps, getBackToCourseListProps,
-  getDepAbbreviationsProps
+  getDepAbbreviationsProps, getCourseCategoriesProps,
+  COURSE_CATEGORIES
 } from './constants.js';
 
 const sendRequest = async (url, properties = {}) => {
@@ -86,6 +87,50 @@ const getDepartmentsAbbreviations = async () => {
   });
 }
 
+const getCourseCategories = async (department) => {
+  let mustCourses, electiveCourses;
+  const mustProperties = getCourseCategoriesProps(COURSE_CATEGORIES.MUST, department);
+  const mustResponse = await sendRequest(viewProgramDetailsURL, mustProperties);
+  if (!mustResponse) {
+    console.log('course categories cannot be fetched');
+  }
+  if (mustResponse) {
+    const rawMustCourses = await mustResponse.text();
+
+    const mustDom = new JSDOM(rawMustCourses, { url: viewProgramDetailsURL });
+    const mustDocument = mustDom.window.document;
+    const mustCourseRowsHTML = Array.from(mustDocument.querySelector('body > form > table:nth-child(7) > tbody')?.children || []).slice(1);
+
+    mustCourses = mustCourseRowsHTML.map(courseRow => {
+      return {
+        courseCode: courseRow.children[1].textContent.trim(),
+        courseCategory: COURSE_CATEGORIES.MUST
+      }
+    });
+  }
+
+  const properties = getCourseCategoriesProps(COURSE_CATEGORIES.ELECTIVE, department);
+  const response = await sendRequest(viewProgramDetailsURL, properties);
+  if (!response) {
+    console.log('course categories cannot be fetched');
+  }
+  if (response) {
+    const rawCourseCategories = await response.text();
+
+    const dom = new JSDOM(rawCourseCategories, { url: viewProgramDetailsURL });
+    const document = dom.window.document;
+    const courseRowsHTML = Array.from(document.querySelector('body > form > table:nth-child(5) > tbody')?.children || []).slice(1);
+
+    electiveCourses = courseRowsHTML.map(courseRow => {
+      return {
+        courseCode: courseRow.children[0].textContent.trim(),
+        courseCategory: courseRow.children[3].textContent.trim()
+      }
+    });
+  }
+
+  return mustCourses.concat(electiveCourses);
+}
 
 const getCoursesForDepartment = async (department, rawCourses, cookie) => {
   const dom = new JSDOM(rawCourses, { url: viewProgramCourseDetailsURL });
@@ -93,10 +138,16 @@ const getCoursesForDepartment = async (department, rawCourses, cookie) => {
   const coursesTable = Array.from(document.querySelector('table[cellspacing] > tbody')?.children || []);
   if (coursesTable.length === 0) return;
 
+  const courseCategories = await getCourseCategories(department);
+  if (!courseCategories) return;
+
   const coursesTableOnlyCourses = coursesTable.slice(1);
   const courses = coursesTableOnlyCourses.map(course => {
+    const courseCode = course.children[1].children[0].textContent.trim();
+    const courseWithCategory = courseCategories.find(courseCategory => courseCategory.courseCode === courseCode);
     return {
-      courseCode: course.children[1].children[0].textContent.trim(),
+      ...courseWithCategory,
+      courseCode,
       courseName: course.children[2].children[0].textContent.trim(),
       courseECTSCredit: course.children[3].children[0].textContent.trim(),
       courseCredit: course.children[4].children[0].textContent.trim(),

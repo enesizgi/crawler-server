@@ -10,6 +10,11 @@ export const excludeList = [
   'PH.D. THESIS'
 ];
 
+export const COURSE_CATEGORIES = {
+  MUST: 'MUST',
+  ELECTIVE: 'ELECTIVE'
+}
+
 export const getCourseProps = (department, cookie) => {
   return {
     headers: {
@@ -87,6 +92,18 @@ export const getDepAbbreviationsProps = () => {
       "content-type": "application/x-www-form-urlencoded",
     },
     body: "SubmitName=Submit&SaFormName=action_index__Findex_html",
+    method: "POST"
+  };
+}
+
+export const getCourseCategoriesProps = (category, department) => {
+  const courseCategory = category === COURSE_CATEGORIES.MUST ? 'Must+Courses' : 'Elective+Courses';
+  return {
+    headers: {
+      "cache-control": "no-cache",
+      "content-type": "application/x-www-form-urlencoded",
+    },
+    body: `SubmitName=${courseCategory}&radio_program_code=${department.value}&hidden_autologin=&SaFormName=action_programs__FPrograms_html`,
     method: "POST"
   };
 }
