@@ -21,6 +21,11 @@ const sendRequest = async (url, properties = {}) => {
   }
 }
 
+const createDocument = ( html, url) => {
+  const dom = new JSDOM(html, { url });
+  return dom.window.document;
+}
+
 const getDepartments = async () => {
   const response = await sendRequest(viewProgramCourseDetailsURL);
   if (!response) {
@@ -30,8 +35,7 @@ const getDepartments = async () => {
   const departments = await response.text();
   if (!departments) return;
 
-  const dom = new JSDOM(departments, { url: viewProgramCourseDetailsURL });
-  const { document } = dom.window;
+  const document = createDocument(departments, viewProgramCourseDetailsURL);
   const options = Array.from(document.querySelectorAll('option'));
   const filteredOptions = options.filter(option => {
     const isBanned = ['Spring', 'Fall', 'Summer School'].reduce((acc, curr) => acc || option.text.includes(curr), false);
@@ -61,8 +65,7 @@ const getDepartmentsAbbreviations = async () => {
   }
 
   const abbreviatonsHTML = await response.text();
-  const dom = new JSDOM(abbreviatonsHTML, { url: viewProgramDetailsURL });
-  const { document } = dom.window;
+  const document = createDocument(abbreviatonsHTML, viewProgramDetailsURL);
   const rawDepartments = Array.from(document.querySelector('body > form > table:nth-child(5) > tbody').children).slice(1);
   const departments = rawDepartments.map(rawDepartment => {
     return {
@@ -97,8 +100,7 @@ const getCourseCategories = async (department) => {
   if (mustResponse) {
     const rawMustCourses = await mustResponse.text();
 
-    const mustDom = new JSDOM(rawMustCourses, { url: viewProgramDetailsURL });
-    const mustDocument = mustDom.window.document;
+    const mustDocument = createDocument(rawMustCourses, viewProgramDetailsURL);
     const mustCourseRowsHTML = Array.from(mustDocument.querySelector('body > form > table:nth-child(7) > tbody')?.children || []).slice(1);
 
     mustCourses = mustCourseRowsHTML.map(courseRow => {
@@ -117,8 +119,7 @@ const getCourseCategories = async (department) => {
   if (response) {
     const rawCourseCategories = await response.text();
 
-    const dom = new JSDOM(rawCourseCategories, { url: viewProgramDetailsURL });
-    const document = dom.window.document;
+    const document = createDocument(rawCourseCategories, viewProgramDetailsURL);
     const courseRowsHTML = Array.from(document.querySelector('body > form > table:nth-child(5) > tbody')?.children || []).slice(1);
 
     electiveCourses = courseRowsHTML.map(courseRow => {
@@ -133,8 +134,7 @@ const getCourseCategories = async (department) => {
 }
 
 const getCoursesForDepartment = async (department, rawCourses, cookie) => {
-  const dom = new JSDOM(rawCourses, { url: viewProgramCourseDetailsURL });
-  const { document } = dom.window;
+  const document = createDocument(rawCourses, viewProgramCourseDetailsURL);
   const coursesTable = Array.from(document.querySelector('table[cellspacing] > tbody')?.children || []);
   if (coursesTable.length === 0) return;
 
@@ -174,8 +174,7 @@ const getCoursesForDepartment = async (department, rawCourses, cookie) => {
     }
     const courseInfo = await response.text();
 
-    const dom = new JSDOM(courseInfo, { url: viewProgramCourseDetailsURL });
-    const { document } = dom.window;
+    const document = createDocument(courseInfo, viewProgramCourseDetailsURL);
     const courseInfoTable = Array.from(document.querySelectorAll('#single_content > form > table:nth-child(6) > tbody')[0].children);
     const courseInfoTableSliced = courseInfoTable.slice(2);
 
@@ -208,8 +207,7 @@ const getCoursesForDepartment = async (department, rawCourses, cookie) => {
       }
       const sectionInfo = await response.text();
 
-      const dom = new JSDOM(sectionInfo, { url: viewProgramCourseDetailsURL });
-      const { document } = dom.window;
+      const document = createDocument(sectionInfo, viewProgramCourseDetailsURL);
       const isThereCriteria = document.querySelector('#formmessage > font > b').textContent.trim().length === 0;
       if (!isThereCriteria) return { section, sectionCriterias: null };
 
