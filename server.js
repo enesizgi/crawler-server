@@ -10,7 +10,7 @@ app.use(corse({
 
 app.use(compression());
 
-app.get('/departments', async (req, res) => {
+app.get('/api/departments', async (req, res) => {
     fs.readFile('departments.json', 'utf8', (err, data) => {
         if (err) {
             console.log(err);
@@ -20,7 +20,7 @@ app.get('/departments', async (req, res) => {
     });
 });
 
-app.get('/deps', async (req, res) => {
+app.get('/api/deps', async (req, res) => {
     fs.readFile('departmentsAbbreviations.json', 'utf8', (err, data) => {
         if (err) {
             console.log(err);
@@ -31,7 +31,7 @@ app.get('/deps', async (req, res) => {
 });
 
 
-app.get('/courses', async (req, res) => {
+app.get('/api/courses', async (req, res) => {
     fs.readFile('courses.json', 'utf8', (err, data) => {
         if (err) {
             console.log(err);
