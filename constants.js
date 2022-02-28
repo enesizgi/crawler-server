@@ -10,7 +10,7 @@ export const excludeList = [
   'PH.D. THESIS'
 ];
 
-export const getCourseProperties = (department, cookie) => {
+export const getCourseProps = (department, cookie) => {
   return {
     headers: {
       "cache-control": "max-age=0",
@@ -24,7 +24,7 @@ export const getCourseProperties = (department, cookie) => {
   };
 }
 
-export const getCourseInfoProperties = (courseCode, cookie) => {
+export const getCourseInfoProps = (courseCode, cookie) => {
   return {
     headers: {
       "cache-control": "max-age=0",
@@ -38,7 +38,7 @@ export const getCourseInfoProperties = (courseCode, cookie) => {
   };
 }
 
-export const getSectionInfoProperties = (sectionNumber, cookie) => {
+export const getSectionInfoProps = (sectionNumber, cookie) => {
   return {
     headers: {
       "cache-control": "max-age=0",
@@ -52,7 +52,7 @@ export const getSectionInfoProperties = (sectionNumber, cookie) => {
   };
 }
 
-export const getBackToCourseSectionProperties = (cookie) => {
+export const getBackToCourseSectionProps = (cookie) => {
   return {
     headers: {
       "cache-control": "max-age=0",
@@ -66,7 +66,7 @@ export const getBackToCourseSectionProperties = (cookie) => {
   };
 }
 
-export const getBackToCourseListProperties = (cookie) => {
+export const getBackToCourseListProps = (cookie) => {
   return {
     headers: {
       "cache-control": "max-age=0",
@@ -80,7 +80,7 @@ export const getBackToCourseListProperties = (cookie) => {
   };
 }
 
-export const getDepAbbreviationsProperties = () => {
+export const getDepAbbreviationsProps = () => {
   return {
     headers: {
       "cache-control": "max-age=0",

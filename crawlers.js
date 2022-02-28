@@ -5,9 +5,9 @@ import mapSeries from 'async/mapSeries.js';
 import mapLimit from 'async/mapLimit.js';
 import {
   viewProgramCourseDetailsURL, excludeList, viewProgramDetailsURL,
-  getCourseInfoProperties, getCourseProperties, getSectionInfoProperties,
-  getBackToCourseSectionProperties, getBackToCourseListProperties,
-  getDepAbbreviationsProperties
+  getCourseInfoProps, getCourseProps, getSectionInfoProps,
+  getBackToCourseSectionProps, getBackToCourseListProps,
+  getDepAbbreviationsProps
 } from './constants.js';
 
 const sendRequest = async (url, properties = {}) => {
@@ -52,7 +52,7 @@ const getDepartments = async () => {
 }
 
 const getDepartmentsAbbreviations = async () => {
-  const properties = getDepAbbreviationsProperties();
+  const properties = getDepAbbreviationsProps();
   const response = await sendRequest(viewProgramDetailsURL, properties);
   if (!response) {
     console.log('department abbreviatons cannot be fetched');
@@ -114,7 +114,7 @@ const getCoursesForDepartment = async (department, rawCourses, cookie) => {
 
   let erroredCourses = [];
   const coursesWithSections = await mapSeries(filteredCourses, async (course) => {
-    const properties = getCourseInfoProperties(course.courseCode, cookie);
+    let properties = getCourseInfoProps(course.courseCode, cookie);
     const response = await sendRequest(viewProgramCourseDetailsURL, properties);
     if (!response) {
       console.log('course sections cannot be fetched');
@@ -148,7 +148,7 @@ const getCoursesForDepartment = async (department, rawCourses, cookie) => {
     }
 
     const courseSectionsWithCriteria = await mapSeries(courseSections, async (section) => {
-      const properties = getSectionInfoProperties(section.sectionNumber, cookie);
+      const properties = getSectionInfoProps(section.sectionNumber, cookie);
       const response = await sendRequest(viewProgramCourseDetailsURL, properties);
       if (!response) {
         console.log('section criteria cannot be fetched');
@@ -177,7 +177,7 @@ const getCoursesForDepartment = async (department, rawCourses, cookie) => {
         }
       });
 
-      const getBackProps = getBackToCourseSectionProperties(cookie);
+      const getBackProps = getBackToCourseSectionProps(cookie);
       const getBackResponse = await sendRequest(viewProgramCourseDetailsURL, getBackProps);
       if (!getBackResponse) {
         console.log('section criteria cannot be fetched get back failed');
@@ -188,8 +188,8 @@ const getCoursesForDepartment = async (department, rawCourses, cookie) => {
       return { section, sectionCriterias };
     });
 
-    const getBackToCourseListProps = getBackToCourseListProperties(cookie);
-    const getBackResponse = await sendRequest(viewProgramCourseDetailsURL, getBackToCourseListProps);
+    properties = getBackToCourseListProps(cookie);
+    const getBackResponse = await sendRequest(viewProgramCourseDetailsURL, properties);
     if (!getBackResponse) {
       console.log('section criteria cannot be fetched get back failed');
       erroredCourses.push(course);
@@ -216,7 +216,7 @@ const getCourses = async () => {
   const courses = await mapLimit(departments, 32, async (department) => {
     try {
       console.log(department.text);
-      const properties = getCourseProperties(department.value, cookie);
+      const properties = getCourseProps(department.value, cookie);
       const response = await sendRequest(viewProgramCourseDetailsURL, properties);
       if (!response) {
         console.log('courses cannot be fetched');
