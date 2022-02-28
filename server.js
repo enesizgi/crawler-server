@@ -20,17 +20,6 @@ app.get('/api/departments', async (req, res) => {
     });
 });
 
-app.get('/api/deps', async (req, res) => {
-    fs.readFile('departmentsAbbreviations.json', 'utf8', (err, data) => {
-        if (err) {
-            console.log(err);
-        }
-        console.log('file read');
-        res.send(data);
-    });
-});
-
-
 app.get('/api/courses', async (req, res) => {
     fs.readFile('courses.json', 'utf8', (err, data) => {
         if (err) {
@@ -41,7 +30,6 @@ app.get('/api/courses', async (req, res) => {
     });
 
 });
-
 
 app.listen(5001, () => {
     console.log('Server is running on port 5001');

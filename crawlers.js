@@ -21,7 +21,7 @@ const sendRequest = async (url, properties = {}) => {
   }
 }
 
-const createDocument = ( html, url) => {
+const createDocument = (html, url) => {
   const dom = new JSDOM(html, { url });
   return dom.window.document;
 }
@@ -42,14 +42,21 @@ const getDepartments = async () => {
     return !isBanned;
   });
 
+  const depAbbreviatons = await getDepartmentsAbbreviations();
+  if (!depAbbreviatons) {
+    console.log('depAbbreviatons cannot be fetched');
+  }
   const simplifiedOptions = filteredOptions.map(option => {
     const { value, text } = option;
-    return { value, text };
+    const department = depAbbreviatons.find(dep => dep.programCode === value);
+    return {
+      ...department,
+      value,
+      text
+    };
   });
-  const optionsJSON = {
-    result: simplifiedOptions
-  }
-  fs.writeFileSync('departments.json', JSON.stringify(optionsJSON), 'utf8', (err) => {
+
+  fs.writeFileSync('departments.json', JSON.stringify(simplifiedOptions), 'utf8', (err) => {
     if (err) {
       console.log(err);
     }
@@ -61,7 +68,7 @@ const getDepartmentsAbbreviations = async () => {
   const response = await sendRequest(viewProgramDetailsURL, properties);
   if (!response) {
     console.log('department abbreviatons cannot be fetched');
-    return;
+    return [];
   }
 
   const abbreviatonsHTML = await response.text();
@@ -83,15 +90,11 @@ const getDepartmentsAbbreviations = async () => {
     }
   });
 
-  fs.writeFile('departmentsAbbreviations.json', JSON.stringify({ result: departments }), 'utf8', (err) => {
-    if (err) {
-      console.log(err);
-    }
-  });
+  return departments;
 }
 
 const getCourseCategories = async (department) => {
-  let mustCourses, electiveCourses;
+  let mustCourses = [], electiveCourses = [];
   const mustProperties = getCourseCategoriesProps(COURSE_CATEGORIES.MUST, department);
   const mustResponse = await sendRequest(viewProgramDetailsURL, mustProperties);
   if (!mustResponse) {
@@ -139,7 +142,9 @@ const getCoursesForDepartment = async (department, rawCourses, cookie) => {
   if (coursesTable.length === 0) return;
 
   const courseCategories = await getCourseCategories(department);
-  if (!courseCategories) return;
+  if (!courseCategories) {
+    console.log('course categories cannot be fetched');
+  };
 
   const coursesTableOnlyCourses = coursesTable.slice(1);
   const courses = coursesTableOnlyCourses.map(course => {
@@ -259,7 +264,7 @@ const getCoursesForDepartment = async (department, rawCourses, cookie) => {
 
 
 const getCourses = async () => {
-  const departments = JSON.parse(fs.readFileSync('departments.json', 'utf8')).result;
+  const departments = JSON.parse(fs.readFileSync('departments.json', 'utf8'));
 
   let cookie;
   const courses = await mapLimit(departments, 32, async (department) => {
@@ -293,7 +298,6 @@ const getCourses = async () => {
 
 const main = async () => {
   console.time('main work time');
-  getDepartmentsAbbreviations();
   await getDepartments();
   await getCourses();
   console.timeEnd('main work time');
