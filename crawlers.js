@@ -46,11 +46,18 @@ const getDepartments = async () => {
   if (!depAbbreviatons) {
     console.log('depAbbreviatons cannot be fetched');
   }
-  const simplifiedOptions = filteredOptions.map(option => {
+
+  const simplifiedOptions = await mapLimit(filteredOptions, 8, async (option) => {
     const { value, text } = option;
     const department = depAbbreviatons.find(dep => dep.programCode === value);
+
+    const courseCategories = await getCourseCategories(option);
+    if (!courseCategories) {
+      console.log('course categories cannot be fetched');
+    }
     return {
       ...department,
+      ...{ courseCategories },
       value,
       text
     };
@@ -141,17 +148,10 @@ const getCoursesForDepartment = async (department, rawCourses, cookie) => {
   const coursesTable = Array.from(document.querySelector('table[cellspacing] > tbody')?.children || []);
   if (coursesTable.length === 0) return;
 
-  const courseCategories = await getCourseCategories(department);
-  if (!courseCategories) {
-    console.log('course categories cannot be fetched');
-  };
-
   const coursesTableOnlyCourses = coursesTable.slice(1);
   const courses = coursesTableOnlyCourses.map(course => {
     const courseCode = course.children[1].children[0].textContent.trim();
-    const courseWithCategory = courseCategories.find(courseCategory => courseCategory.courseCode === courseCode);
     return {
-      ...courseWithCategory,
       courseCode,
       courseName: course.children[2].children[0].textContent.trim(),
       courseECTSCredit: course.children[3].children[0].textContent.trim(),
@@ -214,7 +214,7 @@ const getCoursesForDepartment = async (department, rawCourses, cookie) => {
 
       const document = createDocument(sectionInfo, viewProgramCourseDetailsURL);
       const isThereCriteria = document.querySelector('#formmessage > font > b').textContent.trim().length === 0;
-      if (!isThereCriteria) return { section, sectionCriterias: null };
+      if (!isThereCriteria) return { section };
 
       const criteriaTable = Array.from(document.querySelector('#single_content > form > table:nth-child(6) > tbody')?.children || []).slice(1);
       const sectionCriterias = criteriaTable.map(criteria => {
@@ -267,7 +267,7 @@ const getCourses = async () => {
   const departments = JSON.parse(fs.readFileSync('departments.json', 'utf8'));
 
   let cookie;
-  const courses = await mapLimit(departments, 32, async (department) => {
+  const courses = await mapLimit(departments, 16, async (department) => {
     try {
       console.log(department.text);
       const properties = getCourseProps(department.value, cookie);
@@ -298,7 +298,7 @@ const getCourses = async () => {
 
 const main = async () => {
   console.time('main work time');
-  await getDepartments();
+  // await getDepartments();
   await getCourses();
   console.timeEnd('main work time');
 }
